@@ -70,7 +70,9 @@ def perform_crawling(school_name, formatted_date, original_date_str):
     try:
         # Render 환경 IP 차단 회피를 위한 User-Agent 헤더 추가
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36',
+            'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.6,en;q=0.4',
+            'Referer': 'https://school.use.go.kr/' # 크롤링 대상 웹사이트의 메인 도메인
         }
         
         response = requests.get(target_url, headers=headers, timeout=10)
@@ -78,17 +80,25 @@ def perform_crawling(school_name, formatted_date, original_date_str):
 
         soup = BeautifulSoup(response.text, 'html.parser')
 
+        time.sleep(1)
+
         # CRAWL_CONFIG["target_class"]를 사용하여 데이터 컨테이너 찾기
         data_container = soup.find(class_=CRAWL_CONFIG["target_class"])
+
+        time.sleep(1)
 
         if data_container:
             # 찾은 컨테이너 내부의 모든 텍스트를 추출하여 반환
             return data_container.get_text(strip=True, separator='\n')
         else:
-            # HTML을 받아왔으나 클래스를 찾지 못한 경우
-            print(f"DEBUG: 크롤링 실패. HTML 첫 500자: {response.text[:500]}")
-            return f"크롤링 오류: {school_name} ({original_date_str})에 해당하는 '{CRAWL_CONFIG['target_class']}' 클래스의 데이터를 찾을 수 없습니다."
-
+           # 받아온 HTML에 일반적인 에러 메시지가 있는지 확인
+            if "접근이 거부되었습니다" in response.text or "요청이 차단되었습니다" in response.text:
+                print("DEBUG: IP 차단 또는 접근 거부로 추정됨.")
+                return f"크롤링 오류: IP 차단 추정. 서버에서 접근을 거부했습니다."
+            else:
+                # 일반적인 빈 페이지로 판단
+                print(f"DEBUG: 클래스 '{CRAWL_CONFIG['target_class']}'를 찾을 수 없음.")
+                return f"크롤링 오류: {school_name} ({original_date_str})에 해당하는 데이터를 찾지 못했습니다. (서버 응답 확인 필요)"
     except requests.exceptions.RequestException as e:
         # 네트워크 또는 HTTP 오류 발생 (예: Timeout, 404, Connection Refused)
         return f"크롤링 중 네트워크 또는 HTTP 오류 발생. URL: {target_url}, 오류: {e}"
@@ -152,3 +162,4 @@ def scrape_data():
 if __name__ == '__main__':
     # 로컬 개발 환경에서만 사용
     app.run(debug=True)
+
