@@ -64,6 +64,8 @@ def perform_crawling(school_name, formatted_date, original_date_str):
     else:
         return f"크롤링 오류: 등록되지 않은 학교명({school_name})입니다. 링크를 찾을 수 없습니다."
 
+    modified_url = base_url.replace("list?ymd=", "")
+
     target_url = f"{base_url}{formatted_date}"
     print(f"DEBUG: 크롤링 대상 URL: {target_url}")
 
@@ -71,10 +73,16 @@ def perform_crawling(school_name, formatted_date, original_date_str):
     try:
         # Render 환경 IP 차단 회피를 위한 User-Agent 헤더 추가
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.4896.75 Safari/537.36',
-            'Accept-Language': 'ko-KR,ko;q=0.8,en-US;q=0.6,en;q=0.4',
-            'Referer': 'https://school.use.go.kr/' # 크롤링 대상 웹사이트의 메인 도메인
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'ko-KR,ko;q=0.9,en-US;q=0.8,en;q=0.7',
+            'Accept-Encoding': 'gzip, deflate, br', # 압축 포맷 지원 명시
+            'Connection': 'keep-alive', # 연결 유지 명시
+            'Referer': 'https://school.use.go.kr/', # 이전 페이지를 메인 도메인으로 설정
+            'Upgrade-Insecure-Requests': '1'
         }
+
+        headers['Referer'] = modified_url
         
         response = requests.get(target_url, headers=headers, timeout=10)
         response.raise_for_status()  # 4xx, 5xx 에러 발생 시 예외 처리
@@ -163,5 +171,6 @@ def scrape_data():
 if __name__ == '__main__':
     # 로컬 개발 환경에서만 사용
     app.run(debug=True)
+
 
 
