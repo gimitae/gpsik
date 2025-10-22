@@ -4,6 +4,7 @@ from flask import Flask, render_template, request
 from datetime import datetime
 import os
 import re
+import time
 
 # --- 1. 파일 경로 설정 ---
 # NOTE: Render 환경에서는 템플릿 파일을 'templates' 폴더에 넣고 경로를 'miri.html'로만 지정하는 것이 안전합니다.
@@ -162,4 +163,5 @@ def scrape_data():
 if __name__ == '__main__':
     # 로컬 개발 환경에서만 사용
     app.run(debug=True)
+
 
